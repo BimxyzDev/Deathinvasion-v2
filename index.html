@@ -150,23 +150,19 @@
 
       const account = JSON.parse(localStorage.getItem("account"));
       if (account) {
-        const res = await fetch("/api/account");
+        const res = await fetch("/api/check-expired", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: account.username })
+        });
         const data = await res.json();
-        const acc = data.find(a => a.username === account.username && a.password === account.password);
 
-        if (!acc) {
+        if (data.expired) {
           localStorage.removeItem("account");
           document.getElementById("loginBox").classList.remove("hidden");
+          alert("Akun sudah expired!");
         } else {
-          const now = new Date();
-          const exp = new Date(acc.expired);
-          if (now > exp) {
-            localStorage.removeItem("account");
-            document.getElementById("loginBox").classList.remove("hidden");
-            alert("Akun sudah expired!");
-          } else {
-            showPanel(acc);
-          }
+          showPanel(account);
         }
       } else {
         document.getElementById("loginBox").classList.remove("hidden");
@@ -185,24 +181,25 @@
     const u = document.getElementById("username").value;
     const p = document.getElementById("password").value;
 
-    const res = await fetch("/api/account");
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: u, password: p })
+    });
     const data = await res.json();
-    const acc = data.find(a => a.username === u && a.password === p);
 
-    if (!acc) {
+    if (!data.success) {
       alert("Login gagal!");
       return;
     }
 
-    const now = new Date();
-    const exp = new Date(acc.expired);
-    if (now > exp) {
+    if (data.account.expired && new Date() > new Date(data.account.expired)) {
       alert("Akun expired!");
       return;
     }
 
-    localStorage.setItem("account", JSON.stringify(acc));
-    showPanel(acc);
+    localStorage.setItem("account", JSON.stringify(data.account));
+    showPanel(data.account);
   }
 
   function showPanel(acc) {
@@ -227,7 +224,6 @@
       return;
     }
 
-    // tombol loading spinner
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Processing...';
 
