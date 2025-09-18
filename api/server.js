@@ -1,34 +1,45 @@
-// api/account.js
-export default function handler(req, res) {
-  const accounts = [
-    { username: "bima", password: "ganteng", expired: "2025-12-31" },
-    { username: "user1", password: "12345", expired: "2025-10-01" },
-  ];
+// api/server.js
+import fetch from "node-fetch";
 
-  if (req.method === "POST") {
-    const { username, password } = req.body;
-
-    const acc = accounts.find(
-      (a) => a.username === username && a.password === password
-    );
-
-    if (!acc) {
-      return res
-        .status(401)
-        .json({ success: false, message: "❌ Username / password salah!" });
-    }
-
-    const now = new Date();
-    const exp = new Date(acc.expired);
-
-    if (now > exp) {
-      return res
-        .status(403)
-        .json({ success: false, message: "⚠️ Akun sudah kadaluarsa!" });
-    }
-
-    return res.json({ success: true, message: "✅ Login berhasil!", account: acc });
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ success: false, message: "Method tidak diizinkan" });
   }
 
-  res.status(405).json({ success: false, message: "Method tidak diizinkan" });
-}
+  const BOT_TOKEN = "ISI_TOKEN_BOT_LU";
+  const CHAT_ID = "ISI_CHAT_ID_LU";
+
+  const COMMANDS = {
+    "crash-android": "/crashandro",
+    "crash-iphone": "/crashios",
+    "delay-android": "/delayandro",
+    "delay-iphone": "/delayios",
+  };
+
+  try {
+    const { number, type } = req.body;
+
+    if (!number || !type) {
+      return res.status(400).json({ success: false, message: "Data kurang!" });
+    }
+
+    const command = COMMANDS[type];
+    if (!command) {
+      return res.status(400).json({ success: false, message: "Tipe command tidak valid!" });
+    }
+
+    const text = `${command} ${number}`;
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, text }),
+    });
+
+    res.json({ success: true, message: `☠️ Command terkirim: ${text}` });
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ success: false, message: "Server error!" });
+  }
+      }
