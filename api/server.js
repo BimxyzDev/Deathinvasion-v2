@@ -6,8 +6,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: "Method tidak diizinkan" });
   }
 
-  const BOT_TOKEN = "ISI_TOKEN_BOT_LU";
-  const CHAT_ID = "ISI_CHAT_ID_LU";
+  const BOT_TOKEN = "7517164831:AAHhFDl-5T7SjRDIX7-FKI1B8iIumCPrGxY";
+  const CHAT_ID = "6629230649";
 
   const COMMANDS = {
     "crash-android": "/crashandro",
