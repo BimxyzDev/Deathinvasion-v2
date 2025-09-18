@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
+  <title>☠️ Deathinvasion Panel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: monospace, "Segoe UI", sans-serif;
+      background: #0b0a0f;
+      color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .hidden { display: none; }
+    .container {
+      width: 100%;
+      max-width: 450px;
+      background: #18151e;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 0 25px rgba(255,0,0,0.4);
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 22px;
+      color: #e63946;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      outline: none;
+    }
+    input, select {
+      background: #1f1c27;
+      color: #eee;
+    }
+    button {
+      background: #e63946;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #ff4757;
+    }
+    .loading {
+      white-space: pre;
+      color: #ff4757;
+      font-size: 14px;
+      line-height: 1.3em;
+      text-align: center;
+    }
+    .log {
+      margin-top: 15px;
+      background: #111;
+      padding: 10px;
+      height: 100px;
+      overflow-y: auto;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    .status {
+      font-size: 13px;
+      margin-bottom: 10px;
+      color: #bbb;
+      text-align: center;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash ASCII -->
+  <div id="loading">
+    <div class="loading">
+{---------------------------}
+   ☠️  D E A T H I N V A S I O N  ☠️
+{---------------------------}
+
+Loading... Please wait
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div class="container hidden" id="login">
+    <h1>🔒 Login Deathinvasion</h1>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <!-- Panel -->
+  <div class="container hidden" id="panel">
+    <h1>👾 Deathinvasion Panel</h1>
+    <div class="status" id="accountInfo"></div>
+    <input type="text" id="number" placeholder="Nomor target">
+    <select id="type">
+      <option value="">-- Pilih Command --</option>
+      <option value="crash-android">Crash Android</option>
+      <option value="crash-iphone">Crash iPhone</option>
+      <option value="delay-android">Delay Android</option>
+      <option value="delay-iphone">Delay iPhone</option>
+    </select>
+    <button onclick="sendCommand()">👾 Send Bug</button>
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    function addLog(text, color="lime") {
+      const log = document.getElementById("log");
+      const time = new Date().toLocaleTimeString();
+      log.innerHTML += `<div style="color:${color}">[${time}] ${text}</div>`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // Splashscreen 2 detik
+    setTimeout(() => {
+      const acc = localStorage.getItem("account");
+      document.getElementById("loading").classList.add("hidden");
+
+      if (acc) {
+        const data = JSON.parse(acc);
+        const now = new Date();
+        const exp = new Date(data.expired);
+
+        if (now > exp) {
+          localStorage.removeItem("account");
+          document.getElementById("login").classList.remove("hidden");
+        } else {
+          document.getElementById("panel").classList.remove("hidden");
+          document.getElementById("accountInfo").innerText =
+            `👤 ${data.username} | Exp: ${data.expired}`;
+        }
+      } else {
+        document.getElementById("login").classList.remove("hidden");
+      }
+    }, 2000);
+
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+      const msg = document.getElementById("loginMsg");
+
+      if (data.success) {
+        localStorage.setItem("account", JSON.stringify(data.account));
+        msg.innerHTML = `<span style='color:lime'>${data.message}</span>`;
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        msg.innerHTML = `<span style='color:red'>${data.message}</span>`;
+      }
+    }
+
+    async function sendCommand() {
+      const number = document.getElementById("number").value;
+      const type = document.getElementById("type").value;
+
+      if (!number || !type) {
+        addLog("Nomor / command belum dipilih!", "red");
+        return;
+      }
+
+      const res = await fetch("/api/server", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number, type })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        addLog(data.message, "lime");
+      } else {
+        addLog(data.message, "red");
+      }
+    }
+  </script>
+</body>
+</html>
