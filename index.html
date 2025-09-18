@@ -1,231 +1,203 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
   <title>Deathinvasion</title>
   <style>
     body {
       margin: 0;
-      font-family: monospace;
-      background-color: #0d0d0d;
-      color: #00ff00;
-      overflow: hidden;
-    }
-    #loading {
-      position: fixed;
-      inset: 0;
+      font-family: monospace, "Segoe UI", sans-serif;
+      background: #0b0a0f;
+      color: #eee;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #000;
-      color: #0f0;
-      font-size: 20px;
-      z-index: 1000;
-    }
-    #loginPage, #panelPage {
-      display: none;
       height: 100vh;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    h1 {
-      margin-bottom: 10px;
-      font-size: 26px;
-    }
-    input, select, button {
-      display: block;
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: none;
-      box-sizing: border-box;
-    }
-    input, select {
-      background: #111;
-      color: #0f0;
-    }
-    button {
-      background: #0f0;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    #logBox {
-      background: #111;
-      height: 200px;
-      overflow-y: auto;
-      padding: 10px;
-      font-size: 14px;
-      border: 1px solid #0f0;
+      overflow: hidden;
     }
     .hidden { display: none; }
+    .container {
+      width: 100%;
+      max-width: 450px;
+      background: #18151e;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 0 25px rgba(255,0,0,0.4);
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 22px;
+      color: #e63946;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      outline: none;
+    }
+    input, select {
+      background: #1f1c27;
+      color: #eee;
+    }
+    button {
+      background: #e63946;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #ff4757;
+    }
+    .loading {
+      white-space: pre;
+      color: #ff4757;
+      font-size: 14px;
+      line-height: 1.3em;
+      text-align: center;
+    }
+    .log {
+      margin-top: 15px;
+      background: #111;
+      padding: 10px;
+      height: 100px;
+      overflow-y: auto;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    .status {
+      font-size: 13px;
+      margin-bottom: 10px;
+      color: #bbb;
+      text-align: center;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
-  <div id="loading">Loading...</div>
+  <!-- Splash ASCII -->
+  <div id="loading">
+    <div class="loading">
+{---------------------------}
+   ☠️  D E A T H I N V A S I O N  ☠️
+{---------------------------}
 
-  <div id="loginPage">
-    <h1>☠️ Deathinvasion Login</h1>
-    <input type="text" id="username" placeholder="Username"/>
-    <input type="password" id="password" placeholder="Password"/>
-    <button id="loginBtn">Login</button>
+Loading... Please wait
+    </div>
   </div>
 
-  <div id="panelPage">
-    <h1>☠️ Deathinvasion Panel</h1>
-    <p>Selamat datang, <span id="userLabel"></span> | Expired: <span id="expLabel"></span></p>
-    <input type="text" id="number" placeholder="Masukkan nomor target"/>
-    <select id="commandType"></select>
-    <button id="sendBtn">👾 Send Bug</button>
-    <button id="logoutBtn">Logout</button>
-    <div id="logBox"></div>
+  <!-- Login -->
+  <div class="container hidden" id="login">
+    <h1>🔒 Login Deathinvasion</h1>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <!-- Panel -->
+  <div class="container hidden" id="panel">
+    <h1>👾 Deathinvasion Panel</h1>
+    <div class="status" id="accountInfo"></div>
+    <input type="text" id="number" placeholder="Nomor target">
+    <select id="type">
+      <option value="">-- Pilih Command --</option>
+      <option value="crash-android">Crash Android</option>
+      <option value="crash-iphone">Crash iPhone</option>
+      <option value="delay-android">Delay Android</option>
+      <option value="delay-iphone">Delay iPhone</option>
+    </select>
+    <button onclick="sendCommand()">👾 Send Bug</button>
+    <div class="log" id="log"></div>
   </div>
 
   <script>
-    const loading = document.getElementById("loading");
-    const loginPage = document.getElementById("loginPage");
-    const panelPage = document.getElementById("panelPage");
-    const userLabel = document.getElementById("userLabel");
-    const expLabel = document.getElementById("expLabel");
-    const logBox = document.getElementById("logBox");
-    const commandType = document.getElementById("commandType");
-
-    function showLoading(msg = "Loading...") {
-      loading.innerText = msg;
-      loading.style.display = "flex";
-    }
-    function hideLoading() {
-      loading.style.display = "none";
-    }
-    function addLog(msg) {
+    function addLog(text, color="lime") {
+      const log = document.getElementById("log");
       const time = new Date().toLocaleTimeString();
-      logBox.innerHTML += `[${time}] ${msg}<br/>`;
-      logBox.scrollTop = logBox.scrollHeight;
+      log.innerHTML += `<div style="color:${color}">[${time}] ${text}</div>`;
+      log.scrollTop = log.scrollHeight;
     }
 
-    // cek session
-    function checkSession() {
-      const session = JSON.parse(localStorage.getItem("session"));
-      if (!session) {
-        loginPage.style.display = "block";
-        return;
-      }
-      const now = new Date();
-      const expired = new Date(session.expired);
-      if (now > expired) {
-        localStorage.removeItem("session");
-        loginPage.style.display = "block";
-        addLog("⚠️ Akun expired, silakan login ulang.");
-      } else {
-        userLabel.innerText = session.username;
-        expLabel.innerText = session.expired;
-        panelPage.style.display = "block";
-        fetchCommands();
-      }
-    }
+    // Splashscreen 2 detik
+    setTimeout(() => {
+      const acc = localStorage.getItem("account");
+      document.getElementById("loading").classList.add("hidden");
 
-    // fetch command dari backend
-    async function fetchCommands() {
-      try {
-        const res = await fetch("/api/commands");
-        const data = await res.json();
-        if (data.success) {
-          commandType.innerHTML = "";
-          data.commands.forEach(c => {
-            const opt = document.createElement("option");
-            opt.value = c.type;
-            opt.innerText = `${c.type} (${c.command})`;
-            commandType.appendChild(opt);
-          });
-          addLog("✅ Command list loaded.");
+      if (acc) {
+        const data = JSON.parse(acc);
+        const now = new Date();
+        const exp = new Date(data.expired);
+
+        if (now > exp) {
+          localStorage.removeItem("account");
+          document.getElementById("login").classList.remove("hidden");
+        } else {
+          document.getElementById("panel").classList.remove("hidden");
+          document.getElementById("accountInfo").innerText =
+            `👤 ${data.username} | Exp: ${data.expired}`;
         }
-      } catch {
-        addLog("❌ Gagal load commands.");
+      } else {
+        document.getElementById("login").classList.remove("hidden");
       }
-    }
+    }, 2000);
 
-    // login
-    document.getElementById("loginBtn").onclick = async () => {
+    async function login() {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      showLoading("Login...");
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        hideLoading();
-        if (data.success) {
-          localStorage.setItem("session", JSON.stringify({
-            username: data.username,
-            expired: data.expired
-          }));
-          loginPage.style.display = "none";
-          panelPage.style.display = "block";
-          userLabel.innerText = data.username;
-          expLabel.innerText = data.expired;
-          fetchCommands();
-          addLog("✅ Login berhasil.");
-        } else {
-          addLog("❌ " + data.message);
-        }
-      } catch {
-        hideLoading();
-        addLog("❌ Gagal login.");
+
+      const res = await fetch("/api/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+      const msg = document.getElementById("loginMsg");
+
+      if (data.success) {
+        localStorage.setItem("account", JSON.stringify(data.account));
+        msg.innerHTML = `<span style='color:lime'>${data.message}</span>`;
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        msg.innerHTML = `<span style='color:red'>${data.message}</span>`;
       }
-    };
+    }
 
-    // logout
-    document.getElementById("logoutBtn").onclick = async () => {
-      showLoading("Logout...");
-      try {
-        await fetch("/api/logout", { method: "POST" });
-      } catch {}
-      hideLoading();
-      localStorage.removeItem("session");
-      panelPage.style.display = "none";
-      loginPage.style.display = "block";
-      addLog("✅ Logout berhasil.");
-    };
-
-    // send bug
-    document.getElementById("sendBtn").onclick = async () => {
+    async function sendCommand() {
       const number = document.getElementById("number").value;
-      const type = commandType.value;
-      if (!number) {
-        addLog("⚠️ Nomor tidak boleh kosong.");
+      const type = document.getElementById("type").value;
+
+      if (!number || !type) {
+        addLog("Nomor / command belum dipilih!", "red");
         return;
       }
-      showLoading("Mengirim bug...");
-      try {
-        const res = await fetch("/api/send-bug", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({ number, type })
-        });
-        const data = await res.json();
-        hideLoading();
-        if (data.success) {
-          addLog("✅ " + data.message);
-        } else {
-          addLog("❌ " + data.message);
-        }
-      } catch {
-        hideLoading();
-        addLog("❌ Gagal kirim bug.");
-      }
-    };
 
-    // start
-    setTimeout(() => {
-      hideLoading();
-      checkSession();
-    }, 2000);
+      const res = await fetch("/api/server", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number, type })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        addLog(data.message, "lime");
+      } else {
+        addLog(data.message, "red");
+      }
+    }
   </script>
 </body>
 </html>
