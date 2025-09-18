@@ -1,109 +1,128 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
-  <title>☠️ Deathinvasion Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Deathinvasion</title>
   <style>
     body {
       margin: 0;
-      font-family: monospace, "Segoe UI", sans-serif;
+      font-family: monospace;
       background: #0b0a0f;
       color: #eee;
+      overflow-x: hidden;
+    }
+    .hidden { display: none; }
+    .center {
       display: flex;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      overflow: hidden;
+      flex-direction: column;
     }
-    .hidden { display: none; }
+    pre.ascii {
+      color: #e60000;
+      font-size: 12px;
+      white-space: pre;
+      text-align: center;
+      margin-bottom: 20px;
+    }
     .container {
-      width: 100%;
-      max-width: 450px;
-      background: #18151e;
+      max-width: 400px;
+      margin: 20px auto;
+      background: #1c1a22;
       border-radius: 15px;
-      padding: 25px;
-      box-shadow: 0 0 25px rgba(255,0,0,0.4);
-      animation: fadeIn 0.8s ease-in-out;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(255,0,0,0.4);
     }
     h1 {
       text-align: center;
-      margin-bottom: 20px;
-      font-size: 22px;
-      color: #e63946;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: none;
-      font-size: 15px;
-      outline: none;
+      margin-bottom: 15px;
+      color: #e60000;
     }
     input, select {
-      background: #1f1c27;
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+      background: #2a2731;
       color: #eee;
     }
     button {
-      background: #e63946;
-      color: white;
-      font-weight: bold;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #e60000;
+      color: #fff;
+      font-size: 15px;
       cursor: pointer;
+      font-weight: bold;
       transition: 0.3s;
     }
-    button:hover {
-      background: #ff4757;
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
-    .loading {
-      white-space: pre;
-      color: #ff4757;
-      font-size: 14px;
-      line-height: 1.3em;
+    button:hover:not(:disabled) {
+      background: #ff1a1a;
+    }
+    .status {
       text-align: center;
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #bbb;
     }
     .log {
       margin-top: 15px;
       background: #111;
       padding: 10px;
-      height: 100px;
-      overflow-y: auto;
+      border-radius: 10px;
       font-size: 12px;
-      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
     }
-    .status {
-      font-size: 13px;
-      margin-bottom: 10px;
-      color: #bbb;
-      text-align: center;
+    .spinner {
+      border: 3px solid #444;
+      border-top: 3px solid #fff;
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      margin-right: 6px;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <!-- Splash ASCII -->
-  <div id="loading">
-    <div class="loading">
-{---------------------------}
-   ☠️  D E A T H I N V A S I O N  ☠️
-{---------------------------}
-
-Loading... Please wait
-    </div>
+  <!-- Splashscreen -->
+  <div id="splash" class="center">
+    <pre class="ascii">
+██████╗ ███████╗ █████╗ ████████╗██╗  ██╗██╗██╗   ██╗
+██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║██║╚██╗ ██╔╝
+██████╔╝█████╗  ███████║   ██║   ███████║██║ ╚████╔╝ 
+██╔═══╝ ██╔══╝  ██╔══██║   ██║   ██╔══██║██║  ╚██╔╝  
+██║     ███████╗██║  ██║   ██║   ██║  ██║██║   ██║   
+╚═╝     ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝   ╚═╝   
+    </pre>
+    <p>Loading Deathinvasion...</p>
   </div>
 
   <!-- Login -->
-  <div class="container hidden" id="login">
-    <h1>🔒 Login Deathinvasion</h1>
+  <div class="container hidden" id="loginBox">
+    <h1>👤 Login</h1>
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
-    <div id="loginMsg"></div>
   </div>
 
   <!-- Panel -->
@@ -118,72 +137,101 @@ Loading... Please wait
       <option value="delay-android">Delay Android</option>
       <option value="delay-iphone">Delay iPhone</option>
     </select>
-    <button onclick="sendCommand()">👾 Send Bug</button>
+    <button id="sendBtn" onclick="sendCommand()">👾 Send Bug</button>
+    <button style="background:#555;margin-top:8px" onclick="logout()">🚪 Logout</button>
     <div class="log" id="log"></div>
   </div>
 
-  <script>
-    function addLog(text, color="lime") {
-      const log = document.getElementById("log");
-      const time = new Date().toLocaleTimeString();
-      log.innerHTML += `<div style="color:${color}">[${time}] ${text}</div>`;
-      log.scrollTop = log.scrollHeight;
-    }
+<script>
+  // cek login & expired
+  window.onload = async () => {
+    setTimeout(async () => {
+      document.getElementById("splash").classList.add("hidden");
 
-    // Splashscreen 2 detik
-    setTimeout(() => {
-      const acc = localStorage.getItem("account");
-      document.getElementById("loading").classList.add("hidden");
+      const account = JSON.parse(localStorage.getItem("account"));
+      if (account) {
+        const res = await fetch("/api/account");
+        const data = await res.json();
+        const acc = data.find(a => a.username === account.username && a.password === account.password);
 
-      if (acc) {
-        const data = JSON.parse(acc);
-        const now = new Date();
-        const exp = new Date(data.expired);
-
-        if (now > exp) {
+        if (!acc) {
           localStorage.removeItem("account");
-          document.getElementById("login").classList.remove("hidden");
+          document.getElementById("loginBox").classList.remove("hidden");
         } else {
-          document.getElementById("panel").classList.remove("hidden");
-          document.getElementById("accountInfo").innerText =
-            `👤 ${data.username} | Exp: ${data.expired}`;
+          const now = new Date();
+          const exp = new Date(acc.expired);
+          if (now > exp) {
+            localStorage.removeItem("account");
+            document.getElementById("loginBox").classList.remove("hidden");
+            alert("Akun sudah expired!");
+          } else {
+            showPanel(acc);
+          }
         }
       } else {
-        document.getElementById("login").classList.remove("hidden");
+        document.getElementById("loginBox").classList.remove("hidden");
       }
     }, 2000);
+  };
 
-    async function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
+  function addLog(text, color="lime") {
+    const log = document.getElementById("log");
+    const time = new Date().toLocaleTimeString();
+    log.innerHTML += `<div style="color:${color}">[${time}] ${text}</div>`;
+    log.scrollTop = log.scrollHeight;
+  }
 
-      const res = await fetch("/api/account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
+  async function login() {
+    const u = document.getElementById("username").value;
+    const p = document.getElementById("password").value;
 
-      const data = await res.json();
-      const msg = document.getElementById("loginMsg");
+    const res = await fetch("/api/account");
+    const data = await res.json();
+    const acc = data.find(a => a.username === u && a.password === p);
 
-      if (data.success) {
-        localStorage.setItem("account", JSON.stringify(data.account));
-        msg.innerHTML = `<span style='color:lime'>${data.message}</span>`;
-        setTimeout(() => location.reload(), 1000);
-      } else {
-        msg.innerHTML = `<span style='color:red'>${data.message}</span>`;
-      }
+    if (!acc) {
+      alert("Login gagal!");
+      return;
     }
 
-    async function sendCommand() {
-      const number = document.getElementById("number").value;
-      const type = document.getElementById("type").value;
+    const now = new Date();
+    const exp = new Date(acc.expired);
+    if (now > exp) {
+      alert("Akun expired!");
+      return;
+    }
 
-      if (!number || !type) {
-        addLog("Nomor / command belum dipilih!", "red");
-        return;
-      }
+    localStorage.setItem("account", JSON.stringify(acc));
+    showPanel(acc);
+  }
 
+  function showPanel(acc) {
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("panel").classList.remove("hidden");
+    document.getElementById("accountInfo").innerText = `Login sebagai: ${acc.username} | Exp: ${acc.expired}`;
+    addLog("Login berhasil ✅", "lime");
+  }
+
+  function logout() {
+    localStorage.removeItem("account");
+    location.reload();
+  }
+
+  async function sendCommand() {
+    const number = document.getElementById("number").value;
+    const type = document.getElementById("type").value;
+    const btn = document.getElementById("sendBtn");
+
+    if (!number || !type) {
+      addLog("Nomor / command belum dipilih!", "red");
+      return;
+    }
+
+    // tombol loading spinner
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Processing...';
+
+    try {
       const res = await fetch("/api/server", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -197,7 +245,13 @@ Loading... Please wait
       } else {
         addLog(data.message, "red");
       }
+    } catch (err) {
+      addLog("⚠️ Gagal kirim command!", "red");
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "👾 Send Bug";
     }
-  </script>
+  }
+</script>
 </body>
 </html>
