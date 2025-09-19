@@ -4,7 +4,7 @@ export default function handler(req, res) {
     { 
       username: "Admin",
       password: "0896542",
-      expired: "2045-12-31"
+      expired: "2023-12-31"
     },
     {
       username: "user1",
